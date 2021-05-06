@@ -1,80 +1,51 @@
 // Mapa Leaflet
-var mapa = L.map('mapid').setView([10, -84], 7);
+var mapa = L.map('mapid').setView([9.8, -84.25], 8);
 
-// Capa base
-var osm = L.tileLayer(
+// Definición de capas base
+var capa_osm = L.tileLayer(
   'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png?', 
   {
-	maxZoom: 19,
+    maxZoom: 19,
 	attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
   }
-).addTo(mapa);		
-	
-// Otra capa base
-	var esri = L.tileLayer(
-  'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', 
-  {
-		attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
-  }
-).addTo(mapa);	    
-
-
-// Otra capa base	
-var OpenTopoMap = L.tileLayer(
-	'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', 
-	{
-		maxZoom: 17,
-		attribution: 'Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, <a href="http://viewfinderpanoramas.org">SRTM</a> | Map style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)'
-	}
 ).addTo(mapa);	
 
-
-// Otra capa base
-var CartoDB_Voyager = L.tileLayer(
-	'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
-	{
-		attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-		subdomains: 'abcd',
-		maxZoom: 19
-	}
-).addTo(mapa);	
-
-	
-// Marcadores
-liberia = L.marker([10.633333, -85.433333]);
-liberia.bindTooltip("Liberia").openTooltip();
-liberia.bindPopup('<h2>Liberia</h2><a href="https://es.wikipedia.org/wiki/Liberia_(Costa_Rica)">Información de Liberia</a>').openPopup();
-liberia.addTo(mapa);
-	
-limon = L.marker([10.002216, -83.084037]);
-limon.bindTooltip("Limón").openTooltip();
-limon.addTo(mapa);	   
-	
-puntarenas = L.marker([9.966667, -84.833333]);
-puntarenas.bindTooltip("Puntarenas").openTooltip();
-puntarenas.addTo(mapa);	    	    
-
-sanjose = L.marker([9.930520, -84.084949],
-						  {
-							icon: L.divIcon(
-							  {html: '<i class="fas fa-city"></i>'}
-							)
-						  }
-				  );
-sanjose.bindTooltip("San José").openTooltip();
-sanjose.bindPopup('<h2>San José</h2><a href="https://es.wikipedia.org/wiki/San_Jos%C3%A9_(Costa_Rica)">Información de San José</a><p><img src="img/chepe.jpg" alt="San Jose" height="50" width="100"></p>').openPopup();
-sanjose.addTo(mapa);	    
-		
 // Conjunto de capas base
-var mapasBase = {
-	"ESRI": esri,		
-	"OSM": osm,
-	"Open Topo Map": OpenTopoMap,
-	"CartoDB Voyager": CartoDB_Voyager
+var capas_base = {
+  "OSM": capa_osm
 };	    
-	
+	    
 // Control de capas
-	L.control.layers(mapasBase).addTo(mapa);	 
-	
+control_capas = L.control.layers(capas_base).addTo(mapa);	
+
 // Control de escala
-    L.control.scale({position: "topright", imperial: false}).addTo(mapa);
+L.control.scale().addTo(mapa);
+
+// Capa vectorial en formato GeoJSON
+$.getJSON("https://tpb729-desarrollosigweb-2021.github.io/datos/sinac/areas_protegidas-wgs84.geojson", function(geodata) {
+  var capa_asp = L.geoJson(geodata, {
+    style: function(feature) {
+	  return {'color': "#013220", 'weight': 2.5, 'fillOpacity': 0.0}
+    },
+    onEachFeature: function(feature, layer) {
+      var popupText = "<strong>Área protegida</strong>: " + feature.properties.nombre_asp + "<br>" + "<strong>Categoría</strong>: " + feature.properties.cat_manejo;
+      layer.bindPopup(popupText);
+    }			
+  }).addTo(mapa);
+
+  control_capas.addOverlay(capa_asp, 'Áreas protegidas');
+});
+
+$.getJSON("https://tpb729-desarrollosigweb-2021.github.io/datos/ign/distritos-wgs84.geojson", function(geodata) {
+  var capa_dist = L.geoJson(geodata, {
+    style: function(feature) {
+	  return {'color': "red", 'weight': 2.5, 'fillOpacity': 0.0}
+    },
+    onEachFeature: function(feature, layer) {
+      var popupText = "<strong>Distrito</strong>: " + feature.properties.distrito + "<br>" + "<strong>Cantón</strong>: " + feature.properties.canton + "<br>" + "<strong>Provincia</strong>: " + feature.properties.provincia;
+      layer.bindPopup(popupText);
+    }			
+  }).addTo(mapa);
+
+  control_capas.addOverlay(capa_dist, 'Distritos');
+});
